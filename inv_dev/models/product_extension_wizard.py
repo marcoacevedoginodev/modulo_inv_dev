@@ -1,4 +1,8 @@
 from odoo import models, fields, api
+import os
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class ProductExtensionWizard(models.TransientModel):
     _name = 'product.extension.wizard'
@@ -7,6 +11,11 @@ class ProductExtensionWizard(models.TransientModel):
     id_codigo = fields.Integer(string='Codigo')
     id_numero = fields.Integer(string='Numero')
     cantidad = fields.Integer(string='Cantidad')
+    active = fields.Boolean(string='Active', default=True)
+
+    _sql_constraints = [
+        ('id_codigo_unique', 'UNIQUE(id_codigo, active)', 'El codigo debe ser único.')
+    ]
 
     @api.model
     def generate_zpl_label(self, *args, **kwargs):
@@ -29,3 +38,23 @@ class ProductExtensionWizard(models.TransientModel):
             """
             zpl_labels.append(zpl)
         return zpl_labels
+
+
+    def create_zpl_file(self):
+        zpl = self.generate_zpl_label()
+        file_path = r'C:\Users\macevedo\Desktop\modulo_inv_dev\etiqueta_zpl.txt'
+        try:
+            with open(file_path, 'w') as file:
+                file.write(zpl + '\n')
+            return file_path
+        except Exception as e:
+            _logger.error(f"Error writing ZPL file: {e}")
+            return False
+
+    @api.model
+    def create_and_generate_zpl(self, vals):
+        file_path = self.create_zpl_file()
+        return file_path
+
+    def unlink(self):
+        return True
