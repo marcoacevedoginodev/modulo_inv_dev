@@ -9,11 +9,11 @@
                         <group>
                             <field name="id_codigo"/>
                             <field name="id_numero"/>
-                            <field name="id_cantidad"/>
+                            <field name="cantidad"/>
                         </group>
                         <footer>
                             <button string="Cancelar" class="btn-secondary" special="cancel"/>
-                            <button string="Visualizar Etiqueta" type="object" name="preview_zpl_label" class="btn-default"/>
+                            <button string="Visualizar Etiqueta" type="object" name="generate_zpl_label" class="btn-default"/>
                         </footer>
                     </sheet>
                 </form>
@@ -28,6 +28,6 @@
             <field name="target">new</field>
         </record>
 
-        <menuitem id="menu_product_extension" name="Etiqueta ZPL" parent="stock.menu_stock_inventory_control" action="action_generate_zpl_label" sequence="10"/>
+        <menuitem id="menu_product_extension" name="Generar Etiqueta" parent="stock.menu_stock_inventory_control" action="action_generate_zpl_label" sequence="10"/>
     </data>
 </odoo>

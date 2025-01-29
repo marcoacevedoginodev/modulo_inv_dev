@@ -1,13 +1,13 @@
 {
-    'name': 'Generacion de Etiquetas ZPL',
+    'name': 'Etiquetas ZPL',
     'version': '1.0',
     'summary': 'Modulo para generar etiquetas ZPL',
-    'description': 'Permite generar etiquetas ZPL para productos.',
-    'author': 'Tu Nombre',
+    'description': ' etiquetas ZPL.',
+    'author': 'MarcoAG',
     'depends': ['product', 'stock'],
     'data': [
-        'security/ir.model.access.csv',  
-        'views/inv_model_views.xml',    
+        'security/ir.model.access.csv',
+        'views/inv_model_views.xml',
     ],
     'installable': True,
     'application': True,
