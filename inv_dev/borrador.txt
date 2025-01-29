@@ -4,7 +4,6 @@ inv_dev/
 
 └── models/
     └── __init__.py
-    └── inv_model.py
     └── product_extension_wizard.py
 
 └── views/
@@ -13,6 +12,202 @@ inv_dev/
 └── security/
     └── ir.model.access.csv
 
-└── controllers/
-    └── __init__.py
-    └── controllers.py
+
+
+tengo el siguiente modelo 
+
+
+inv_model.py
+
+from odoo import models, fields, api
+
+class Codigo(models.Model):
+    _name = 'product.codigo'
+    _description = 'Codigo'
+
+    name = fields.Char(string="Codigo")
+
+class Numero(models.Model):
+    _name = 'product.numero'
+    _description = 'Numero'
+
+    name = fields.Char(string="Numero")
+
+class Cantidad(models.Model):    
+    _name = 'product.cantidad'
+    _description = 'Cantidad'
+
+    name = fields.Float(string="Cantidad", default=0.0)
+
+class ProductExtension(models.Model):
+    _inherit = 'product.product'
+
+    id_codigo = fields.Many2one('product.codigo', string="Codigo", required=True)
+    id_numero = fields.Many2one('product.numero', string="Numero", required=True)
+    cantidad = fields.Float(string="Cantidad", default=0.0, required=True)
+
+    name = fields.Char(string="Nombre")
+
+    @api.model
+    def create(self, vals):
+        if not vals.get('name'):
+            vals['name'] = 'Producto sin nombre'
+        return super(ProductExtension, self).create(vals)
+
+    def write(self, vals):
+        if 'name' not in vals and not self.name:
+            vals['name'] = 'Producto sin nombre'
+        return super(ProductExtension, self).write(vals)
+
+
+
+product_extension_wizard.py
+
+from odoo import models, fields, api
+import os
+import logging
+
+_logger = logging.getLogger(__name__)
+
+class ProductExtensionWizard(models.TransientModel):
+    _name = 'product.extension.wizard'
+    _description = 'Product Extension Wizard'
+
+    id_codigo = fields.Integer(string='Codigo')
+    id_numero = fields.Integer(string='Numero')
+    cantidad = fields.Integer(string='Cantidad')
+    active = fields.Boolean(string='Active', default=True)
+
+    _sql_constraints = [
+        ('id_codigo_unique', 'UNIQUE(id_codigo, active)', 'El codigo debe ser único.')
+    ]
+
+    @api.model
+    def generate_zpl_label(self, *args, **kwargs):
+        zpl_labels = []
+        for record in self:
+            zpl = f"""
+            ^XA
+            ^FO50,50 
+            ^B3N,N,100,Y,N
+            ^FD>: {record.id_codigo}^FS
+            ^FO50,200
+            ^A0N,50,50
+            ^FDNumero: {record.id_numero}^FS
+            ^FO50,300
+            ^A0N,50,50
+            ^FDCantidad: {record.cantidad}^FS
+            ^FO50,400
+            ^GB800,3,3^FS            
+            ^XZ
+            """
+            zpl_labels.append(zpl)
+        return zpl_labels
+
+
+    def create_zpl_file(self):
+        zpl = self.generate_zpl_label()
+        file_path = r'C:\Users\macevedo\Desktop\modulo_inv_dev\etiqueta_zpl.txt'
+        try:
+            with open(file_path, 'w') as file:
+                file.write(zpl + '\n')
+            return file_path
+        except Exception as e:
+            _logger.error(f"Error writing ZPL file: {e}")
+            return False
+
+    @api.model
+    def create_and_generate_zpl(self, vals):
+        file_path = self.create_zpl_file()
+        return file_path
+
+    def unlink(self):
+        return True
+
+
+las siguientes vistas
+
+inv_model_views.xml
+
+<odoo>
+    <data>
+        <record id="view_product_extension_form_zpl" model="ir.ui.view">
+            <field name="name">product.extension.form.zpl</field>
+            <field name="model">product.extension.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Generar Etiqueta ZPL">
+                    <sheet>
+                        <group>
+                            <field name="id_codigo" on_delete="set null"/>
+                            <field name="id_numero"/>
+                            <field name="cantidad"/>
+                        </group>
+                        <footer>
+                            <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                            <button string="Visualizar Etiqueta" type="object" name="generate_zpl_label" class="btn-default"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_generate_zpl_label" model="ir.actions.act_window">
+            <field name="name">Generar Etiqueta ZPL</field>
+            <field name="res_model">product.extension.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_product_extension_form_zpl"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_product_extension" name="Generar Etiqueta" parent="stock.menu_stock_inventory_control" action="action_generate_zpl_label" sequence="10"/>
+    </data>
+</odoo>
+
+
+el siguiente archivo security
+
+ir.model.access.csv
+
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_codigo,access_product_codigo,model_product_codigo,,1,1,1,1
+access_product_numero,access_product_numero,model_product_numero,,1,1,1,1
+access_product_cantidad,access_product_cantidad,model_product_cantidad,,1,1,1,1
+access_product_extension_wizard,access_product_extension_wizard,model_product_extension_wizard,,1,1,1,1
+
+funcion no genera archivo txt en ruta entregada C:\Users\macevedo\Desktop\modulo_inv_dev\etiqueta_zpl.txt
+encontrar errores y inconsistencias 
+
+
+
+
+
+
+
+""" zpl = f"""
+^XA
+^FO50,50 
+^B3N,N,100,Y,N
+^FD>: {record.id_codigo.name}^FS 
+^FO50,200
+^A0N,50,50
+^FDNumero: {record.id_numero.name}^FS  
+^FO50,300
+^A0N,50,50
+^FDCantidad: {record.cantidad}^FS
+^FO50,400
+^GB800,3,3^FS            
+^XZ
+""" """
+
+
+def create_zpl_file(self):
+    zpl_labels = self.generate_zpl_label()
+    file_path = r'C:\Users\macevedo\Desktop\modulo_inv_dev\etiqueta_zpl.txt'
+    try:
+        with open(file_path, 'w') as file:
+            for zpl in zpl_labels:
+                file.write(zpl + '\n')
+        return file_path
+    except Exception as e:
+        _logger.error(f"Error writing ZPL file: {e}")
+        return False 
