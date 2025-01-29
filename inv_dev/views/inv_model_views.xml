@@ -7,7 +7,7 @@
                 <form string="Generar Etiqueta ZPL">
                     <sheet>
                         <group>
-                            <field name="id_codigo"/>
+                            <field name="id_codigo" on_delete="set null"/>
                             <field name="id_numero"/>
                             <field name="cantidad"/>
                         </group>
