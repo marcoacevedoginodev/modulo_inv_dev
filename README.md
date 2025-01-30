@@ -2,7 +2,8 @@
 
 ## Alcance del modulo
 
-Modulo extendido de modelo producto el cual genera etiquetas ZPL descargando  su contenido en un archivo .txt 
+Modulo extendido de modelo producto el cual genera etiquetas ZPL descargando  su contenido en un archivo .txt
+en la ruta "/tmp/" 
 
 ## Modelos 
 

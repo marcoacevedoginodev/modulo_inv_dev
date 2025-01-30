@@ -13,7 +13,7 @@
                         </group>
                         <footer>
                             <button string="Cancelar" class="btn-secondary" special="cancel"/>
-                            <button string="Visualizar Etiqueta" type="object" name="generate_zpl_label" class="btn-default"/>
+                            <button string="Generar Etiqueta" type="object" name="create_and_generate_zpl" class="btn-default"/>
                         </footer>
                     </sheet>
                 </form>

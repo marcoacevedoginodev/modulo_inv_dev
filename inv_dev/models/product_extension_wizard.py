@@ -28,70 +28,79 @@ class ProductExtensionWizard(models.TransientModel):
 
     id_codigo = fields.Many2one('product.codigo', string="Codigo", required=True)
     id_numero = fields.Many2one('product.numero', string="Numero", required=True)
-    cantidad = fields.Float(string="Cantidad", default=0.0, required=True)
+    cantidad = fields.Integer(string="Cantidad", default=0.0, required=True)
     active = fields.Boolean(string='Active', default=True)
     name = fields.Char(string="Nombre")
+    zpl_content = fields.Text(string="ZPL Content", readonly=True)
 
     _sql_constraints = [
-        ('id_codigo_unique', 'UNIQUE(id_codigo, active)', 'El codigo debe ser único.')
+        ('id_codigo_unique', 'UNIQUE(id_codigo, active)', 'el codigo debe ser único.')
     ]
 
     @api.model
     def create(self, vals):
         if not vals.get('name'):
-            vals['name'] = 'Producto sin nombre'
+            vals['name'] = 'producto sin nombre'
         return super(ProductExtensionWizard, self).create(vals)
 
     def write(self, vals):
         if 'name' not in vals and not self.name:
-            vals['name'] = 'Producto sin nombre'
+            vals['name'] = 'producto sin nombre'
         return super(ProductExtensionWizard, self).write(vals)
         
     @api.model
-    def generate_zpl_label(self, *args, **kwargs):
-        zpl_labels = []
-        for record in self:
-            zpl = f"""
-            ^XA
-            ^FO50,50 
-            ^B3N,N,100,Y,N
-            ^FD>: {record.id_codigo.name}^FS 
-            ^FO50,200
-            ^A0N,50,50
-            ^FDNumero: {record.id_numero.name}^FS  
-            ^FO50,300
-            ^A0N,50,50
-            ^FDCantidad: {record.cantidad}^FS
-            ^FO50,400
-            ^GB800,3,3^FS            
-            ^XZ
-            """
+    def generate_zpl_label(self, vals):
+        codigo_record = self.env['product.codigo'].browse(vals.get('id_codigo'))
+        numero_record = self.env['product.numero'].browse(vals.get('id_numero'))
+        codigo = codigo_record.name if codigo_record else 'Desconocido'
+        numero = numero_record.name if numero_record else 'Desconocido'
+        cantidad = vals.get('cantidad', 0)
 
-            zpl_labels.append(zpl)
-        return zpl_labels
-        
-    def create_zpl_file(self):
-        zpl = self.generate_zpl_label()
-        if not zpl:
-            _logger.error("No se generaron etiquetas ZPL.")
-            return False
-        file_path = r'C:/home/lortiz/etiqueta_zpl.txt'
+        zpl = f"""
+        ^XA
+        ^FO50,50 
+        ^B3N,N,100,Y,N
+        ^FD>: {codigo}^FS 
+        ^FO50,200
+        ^A0N,50,50
+        ^FDNumero: {numero}^FS  
+        ^FO50,300
+        ^A0N,50,50
+        ^FDCantidad: {cantidad}^FS
+        ^FO50,400
+        ^GB800,3,3^FS            
+        ^XZ
+        """
+        return zpl.strip()
+
+    def create_and_generate_zpl(self):
+        vals = {
+            'id_codigo': self.id_codigo.id if self.id_codigo else '',
+            'id_numero': self.id_numero.id if self.id_numero else '',
+            'cantidad': self.cantidad
+        }
+        zpl = self.generate_zpl_label(vals)
+
+        file_path = '/tmp/etiqueta_zpl.txt'
         directory = os.path.dirname(file_path)
+
         if not os.path.exists(directory):
             os.makedirs(directory)
+
         try:
             with open(file_path, 'w') as file:
-                file.write(zpl[0] + '\n') 
-            return file_path
+                file.write(zpl + '\n')
+            _logger.info(f"etiqueta guardada en {file_path}")
         except Exception as e:
-            _logger.error(f"Error escribiendo el archivo ZPL: {e}")
-            return False
-    
-    @api.model
-    def create_and_generate_zpl(self, vals):
-        record = self.create(vals)
-        file_path = record.create_zpl_file()
-        return file_path
+            _logger.error(f"error: {e}")
+            return {'warning': {'title': "Error", 'message': "no se pudo guardar el archivo."}}
+
+        return {
+            'warning': {
+                'title': "Éxito",
+                'message': f"etiqueta ZPL generada y guardada en {file_path}."
+            }
+        }
 
     def unlink(self):
         for record in self:
