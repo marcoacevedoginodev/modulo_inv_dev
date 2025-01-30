@@ -75,7 +75,10 @@ class ProductExtensionWizard(models.TransientModel):
         if not zpl:
             _logger.error("No se generaron etiquetas ZPL.")
             return False
-        file_path = r'C:\Users\macevedo\Documents\etiqueta_zpl.txt'
+        file_path = r'C:/home/lortiz/etiqueta_zpl.txt'
+        directory = os.path.dirname(file_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         try:
             with open(file_path, 'w') as file:
                 file.write(zpl[0] + '\n') 
