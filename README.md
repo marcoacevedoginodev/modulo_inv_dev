@@ -8,16 +8,13 @@ en la ruta "/tmp/"
 ## Modelos 
 
 ### `product.codigo`
-- Manages product codes.
 - Fields:
   - `name` (Char): Codigos de productos.
 
 ### `product.numero`
-- Manages product numbers.
 - Fields:
   - `name` (Char): Numero de productos.
 
 ### `product.cantidad`
-- Manages product quantities.
 - Fields:
   - `name` (Float): Cantidad de productos.
